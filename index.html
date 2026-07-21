@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Dear Site</title>
+    <title>My Dear Site — анализ сайта</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>M</text></svg>">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             background: #f7f3ee;
             color: #3d2e26;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             line-height: 1.6;
             padding: 2rem 1rem;
             max-width: 1200px;
@@ -22,26 +24,31 @@
             justify-content: space-between;
             align-items: baseline;
             margin-bottom: 0.25rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
         h1 {
-            font-weight: 400;
-            font-size: 2.2rem;
-            letter-spacing: -1px;
-            color: #5a3f34;
-            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            font-size: 2rem;
+            letter-spacing: -0.5px;
+            color: #3d2e26;
+            font-family: 'Inter', sans-serif;
         }
         .lang-switch {
             display: flex;
-            gap: 0.5rem;
-            font-size: 0.9rem;
+            gap: 0.25rem;
+            font-size: 0.85rem;
             font-weight: 500;
             color: #8a7a6e;
         }
         .lang-switch span {
             cursor: pointer;
-            padding: 0.2rem 0.5rem;
+            padding: 0.2rem 0.6rem;
             border-radius: 4px;
-            transition: background 0.2s;
+            transition: background 0.2s, color 0.2s;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
         }
         .lang-switch span.active {
             background: #9b7b64;
@@ -83,6 +90,7 @@
             transition: border 0.2s;
             outline: none;
             color: #3d2e26;
+            font-family: 'Inter', sans-serif;
         }
         .input-area input:focus { border-color: #b2957a; }
         .input-area button {
@@ -96,6 +104,7 @@
             cursor: pointer;
             transition: background 0.2s;
             white-space: nowrap;
+            font-family: 'Inter', sans-serif;
         }
         .input-area button:hover { background: #7f6552; }
         .input-area button:disabled {
@@ -125,6 +134,7 @@
             color: #6b5a4e;
             margin-top: 0.25rem;
             min-height: 1.5em;
+            font-family: 'Inter', sans-serif;
         }
         #results { display: none; }
         #results.active { display: block; }
@@ -150,15 +160,18 @@
             font-weight: 300;
             color: #3d2e26;
             line-height: 1;
+            font-family: 'Inter', sans-serif;
         }
         .score-label {
             font-size: 1rem;
             color: #6b5a4e;
+            font-family: 'Inter', sans-serif;
         }
         .verdict {
             font-size: 1.2rem;
             font-weight: 500;
             color: #5a3f34;
+            font-family: 'Inter', sans-serif;
         }
         .verdict small {
             font-weight: 400;
@@ -185,6 +198,7 @@
             padding-bottom: 0.5rem;
             margin-bottom: 1rem;
             font-size: 1.1rem;
+            font-family: 'Inter', sans-serif;
         }
         .metric {
             display: flex;
@@ -194,10 +208,11 @@
             font-size: 0.95rem;
         }
         .metric:last-child { border-bottom: none; }
-        .metric .name { color: #5a4a3e; }
+        .metric .name { color: #5a4a3e; font-family: 'Inter', sans-serif; }
         .metric .value {
             font-weight: 500;
             color: #3d2e26;
+            font-family: 'Inter', sans-serif;
         }
         .metric .value.good { color: #4a7b5c; }
         .metric .value.warn { color: #b58a5e; }
@@ -216,6 +231,7 @@
             font-weight: 500;
             cursor: pointer;
             transition: background 0.2s;
+            font-family: 'Inter', sans-serif;
         }
         .pdf-btn button:hover { background: #7f6552; }
         .footer {
@@ -225,6 +241,7 @@
             color: #b2a296;
             border-top: 1px solid #e6ddd5;
             padding-top: 1.5rem;
+            font-family: 'Inter', sans-serif;
         }
         @media (max-width: 600px) {
             .input-area { flex-direction: column; align-items: stretch; }
@@ -239,8 +256,8 @@
 <div class="header">
     <h1>My Dear Site</h1>
     <div class="lang-switch">
-        <span id="lang-ru" class="active" data-lang="ru">Ru</span>
-        <span id="lang-en" data-lang="en">En</span>
+        <span id="lang-ru" class="active" data-lang="ru">RU</span>
+        <span id="lang-en" data-lang="en">EN</span>
     </div>
 </div>
 <div class="subtitle" id="subtitle">Быстрый и детальный технический анализ вашего сайта</div>
@@ -265,13 +282,13 @@
         <div class="verdict" id="verdict-text">Ожидание анализа</div>
     </div>
     <div class="blocks" id="blocks-container"></div>
-    <div class="pdf-btn"><button id="pdf-download">Скачать PDF</button></div>
+    <div class="pdf-btn"><button id="pdf-download">Скачать</button></div>
 </div>
 
 <div class="footer" id="footer-text">My Dear Site — быстрый и детальный технический анализ вашего сайта</div>
 
 <script>
-    // ========== TRANSLATIONS ==========
+    // ======================== ПЕРЕВОДЫ ========================
     const LANG = {
         ru: {
             subtitle: 'Быстрый и детальный технический анализ вашего сайта',
@@ -373,10 +390,10 @@
             incomplete: 'Неполный',
             notFound: 'Не обнаружено',
             footer: 'My Dear Site — быстрый и детальный технический анализ вашего сайта',
-            pdfTitle: 'Отчет по сайту',
+            pdfTitle: 'Отчёт по сайту',
             pdfScore: 'Общий балл',
             pdfVerdict: 'Вердикт',
-            pdfDownload: 'Скачать PDF',
+            pdfDownload: 'Скачать',
             waiting: 'Ожидание анализа'
         },
         en: {
@@ -482,12 +499,13 @@
             pdfTitle: 'Report for',
             pdfScore: 'Overall score',
             pdfVerdict: 'Verdict',
-            pdfDownload: 'Download PDF',
+            pdfDownload: 'Download',
             waiting: 'Waiting for analysis'
         }
     };
 
     let currentLang = 'ru';
+
     function t(key) { return LANG[currentLang][key] || key; }
     function tm(key) { return LANG[currentLang].metrics[key] || key; }
     function tb(key) { return LANG[currentLang].blocks[key] || key; }
@@ -516,7 +534,7 @@
         return value;
     }
 
-    // ========== DOM refs ==========
+    // ======================== DOM ========================
     const langRu = document.getElementById('lang-ru');
     const langEn = document.getElementById('lang-en');
     const subtitle = document.getElementById('subtitle');
@@ -528,7 +546,6 @@
     const footerText = document.getElementById('footer-text');
     const pdfBtn = document.getElementById('pdf-download');
 
-    // ========== Language switch ==========
     function setLang(lang) {
         currentLang = lang;
         document.querySelectorAll('.lang-switch span').forEach(el => el.classList.remove('active'));
@@ -540,7 +557,6 @@
         footerText.textContent = t('footer');
         pdfBtn.textContent = t('pdfDownload');
         if (document.getElementById('results').classList.contains('active')) {
-            // перерисовать результаты на новом языке
             const data = window._lastResults;
             if (data) displayResults(data);
         }
@@ -549,7 +565,7 @@
     langRu.addEventListener('click', () => setLang('ru'));
     langEn.addEventListener('click', () => setLang('en'));
 
-    // ========== Core functions ==========
+    // ======================== ОСНОВНЫЕ ФУНКЦИИ ========================
     function getDomain(url) {
         try { return new URL(url).hostname; } catch { return ''; }
     }
@@ -612,6 +628,99 @@
             checked++;
         }
         return broken;
+    }
+
+    function detectCMS(doc) {
+        const checks = [
+            { name: 'WordPress', test: () => doc.body.className.includes('wp-') || doc.querySelector('meta[name="generator"][content*="WordPress"]') || doc.querySelector('link[href*="wp-content"]') },
+            { name: 'Joomla', test: () => doc.querySelector('meta[name="generator"][content*="Joomla"]') || doc.querySelector('a[href*="com_"]') },
+            { name: 'Drupal', test: () => doc.querySelector('meta[name="generator"][content*="Drupal"]') || doc.querySelector('script[src*="drupal"]') },
+            { name: 'Bitrix', test: () => doc.querySelector('meta[name="generator"][content*="Bitrix"]') || doc.querySelector('a[href*="bitrix"]') || doc.querySelector('link[href*="bitrix"]') },
+            { name: 'Shopify', test: () => doc.querySelector('meta[name="generator"][content*="Shopify"]') || doc.querySelector('script[src*="shopify"]') || doc.querySelector('link[href*="shopify"]') },
+            { name: 'Tilda', test: () => doc.querySelector('link[href*="tilda"]') || doc.querySelector('script[src*="tilda"]') || doc.querySelector('[data-tilda]') },
+            { name: 'Wix', test: () => doc.querySelector('meta[name="generator"][content*="Wix"]') || doc.querySelector('script[src*="wix"]') },
+            { name: 'Squarespace', test: () => doc.querySelector('meta[name="generator"][content*="Squarespace"]') || doc.querySelector('link[href*="squarespace"]') },
+            { name: 'Webflow', test: () => doc.querySelector('meta[name="generator"][content*="Webflow"]') || doc.querySelector('script[src*="webflow"]') },
+            { name: 'Ghost', test: () => doc.querySelector('meta[name="generator"][content*="Ghost"]') || doc.querySelector('link[href*="ghost"]') },
+            { name: 'MODX', test: () => doc.querySelector('meta[name="generator"][content*="MODX"]') || doc.querySelector('a[href*="modx"]') },
+            { name: 'OpenCart', test: () => doc.querySelector('meta[name="generator"][content*="OpenCart"]') || doc.querySelector('link[href*="opencart"]') },
+            { name: 'Magento', test: () => doc.querySelector('meta[name="generator"][content*="Magento"]') || doc.querySelector('script[src*="magento"]') },
+            { name: 'PrestaShop', test: () => doc.querySelector('meta[name="generator"][content*="PrestaShop"]') || doc.querySelector('link[href*="prestashop"]') }
+        ];
+        for (const c of checks) {
+            if (c.test()) return c.name;
+        }
+        return 'Unknown';
+    }
+
+    function detectJSFramework(doc) {
+        const checks = [
+            { name: 'React', test: () => doc.querySelector('[data-reactroot]') || doc.querySelector('[data-reactid]') || doc.querySelector('script[src*="react"]') || window.React },
+            { name: 'Next.js', test: () => doc.querySelector('script[src*="_next"]') || doc.querySelector('meta[name="next-head-count"]') },
+            { name: 'Vue', test: () => doc.querySelector('[data-v-]') || doc.querySelector('script[src*="vue"]') || window.Vue },
+            { name: 'Nuxt', test: () => doc.querySelector('script[src*="_nuxt"]') || doc.querySelector('meta[name="nuxt"]') },
+            { name: 'Angular', test: () => doc.querySelector('[ng-]') || doc.querySelector('script[src*="angular"]') || window.angular },
+            { name: 'Svelte', test: () => doc.querySelector('script[src*="svelte"]') || doc.querySelector('[data-svelte]') },
+            { name: 'Alpine.js', test: () => doc.querySelector('[x-data]') || doc.querySelector('script[src*="alpine"]') },
+            { name: 'Ember', test: () => doc.querySelector('script[src*="ember"]') || window.Ember },
+            { name: 'Backbone', test: () => doc.querySelector('script[src*="backbone"]') || window.Backbone },
+            { name: 'Gatsby', test: () => doc.querySelector('script[src*="gatsby"]') || doc.querySelector('meta[name="generator"][content*="Gatsby"]') }
+        ];
+        for (const c of checks) {
+            if (c.test()) return c.name;
+        }
+        return 'Unknown';
+    }
+
+    function detectAnalytics(html, doc) {
+        const found = [];
+        const scriptSrcs = [...doc.querySelectorAll('script[src]')].map(s => s.getAttribute('src') || '');
+        const fullText = doc.documentElement.textContent;
+        if (scriptSrcs.some(s => s.includes('google-analytics') || s.includes('ga.js') || s.includes('gtag'))) found.push('Google Analytics');
+        if (scriptSrcs.some(s => s.includes('mc.yandex')) || fullText.includes('metrika')) found.push('Yandex Metrica');
+        if (scriptSrcs.some(s => s.includes('googletagmanager'))) found.push('Google Tag Manager');
+        if (scriptSrcs.some(s => s.includes('facebook.com/tr'))) found.push('Facebook Pixel');
+        if (scriptSrcs.some(s => s.includes('vk.com/js/api/openapi'))) found.push('VK Pixel');
+        if (scriptSrcs.some(s => s.includes('hotjar'))) found.push('Hotjar');
+        if (scriptSrcs.some(s => s.includes('clarity'))) found.push('Clarity');
+        if (scriptSrcs.some(s => s.includes('linkedin.com/px'))) found.push('LinkedIn Insight');
+        if (scriptSrcs.some(s => s.includes('tiktok.com/embed'))) found.push('TikTok Pixel');
+        return found.length ? found.join(', ') : 'Не обнаружено';
+    }
+
+    function detectCDN(headers) {
+        const cdnHeaders = ['cf-', 'x-cdn', 'x-akamai', 'fastly', 'cloudfront', 'cdn77', 'stackpath', 'bunnycdn', 'keycdn'];
+        for (const key of headers.keys()) {
+            const lower = key.toLowerCase();
+            if (cdnHeaders.some(h => lower.includes(h))) {
+                const name = key.split('-')[0].toUpperCase();
+                if (name === 'CF') return 'Cloudflare';
+                if (name === 'X') return 'CDN77';
+                return name;
+            }
+        }
+        const server = headers.get('server') || '';
+        if (server.includes('cloudflare')) return 'Cloudflare';
+        if (server.includes('akamai')) return 'Akamai';
+        if (server.includes('fastly')) return 'Fastly';
+        return 'Unknown';
+    }
+
+    function detectHosting(headers) {
+        const server = headers.get('server') || '';
+        if (server.includes('nginx')) return 'Nginx';
+        if (server.includes('Apache')) return 'Apache';
+        if (server.includes('cloudflare')) return 'Cloudflare';
+        if (server.includes('github')) return 'GitHub Pages';
+        if (server.includes('IIS')) return 'IIS';
+        if (server.includes('openresty')) return 'OpenResty';
+        if (server.includes('LiteSpeed')) return 'LiteSpeed';
+        if (server.includes('Vercel')) return 'Vercel';
+        if (server.includes('Netlify')) return 'Netlify';
+        if (server.includes('Heroku')) return 'Heroku';
+        if (server.includes('AWS')) return 'AWS';
+        if (server.includes('Google')) return 'Google Cloud';
+        return 'Unknown';
     }
 
     function analyzeDOM(html, baseUrl) {
@@ -759,37 +868,8 @@
         const prevNext = doc.querySelector('link[rel="prev"], link[rel="next"]');
         r.hasPrevNext = !!prevNext;
 
-        let cms = 'Unknown';
-        const bodyClasses = doc.body.className;
-        if (bodyClasses.includes('wp-') || doc.querySelector('meta[name="generator"][content*="WordPress"]')) cms = 'WordPress';
-        else if (doc.querySelector('meta[name="generator"][content*="Joomla"]')) cms = 'Joomla';
-        else if (doc.querySelector('meta[name="generator"][content*="Drupal"]')) cms = 'Drupal';
-        else if (doc.querySelector('meta[name="generator"][content*="Bitrix"]')) cms = 'Bitrix';
-        else if (doc.querySelector('a[href*="bitrix"]')) cms = 'Bitrix';
-        else if (doc.querySelector('meta[name="generator"][content*="Shopify"]')) cms = 'Shopify';
-        r.cms = cms;
-
-        let framework = 'Unknown';
-        const scripts = doc.querySelectorAll('script[src]');
-        for (const s of scripts) {
-            const src = s.getAttribute('src') || '';
-            if (src.includes('react') || src.includes('preact')) { framework = 'React/Preact'; break; }
-            if (src.includes('vue')) { framework = 'Vue'; break; }
-            if (src.includes('angular')) { framework = 'Angular'; break; }
-            if (src.includes('svelte')) { framework = 'Svelte'; break; }
-        }
-        r.jsFramework = framework;
-
-        let analytics = [];
-        const scriptSrcs = [...doc.querySelectorAll('script[src]')].map(s => s.getAttribute('src') || '');
-        const fullText = doc.documentElement.textContent;
-        if (scriptSrcs.some(s => s.includes('google-analytics') || s.includes('ga.js') || s.includes('gtag'))) analytics.push('Google Analytics');
-        if (scriptSrcs.some(s => s.includes('mc.yandex')) || fullText.includes('metrika')) analytics.push('Yandex Metrica');
-        if (scriptSrcs.some(s => s.includes('googletagmanager'))) analytics.push('Google Tag Manager');
-        if (scriptSrcs.some(s => s.includes('doubleclick') || s.includes('adsystem'))) analytics.push('Google Ads');
-        if (fullText.includes('yandex_metrika')) analytics.push('Yandex Metrica');
-        if (scriptSrcs.some(s => s.includes('facebook.com/tr'))) analytics.push('Facebook Pixel');
-        r.analytics = analytics.length ? analytics.join(', ') : 'Не обнаружено';
+        r.cms = detectCMS(doc);
+        r.jsFramework = detectJSFramework(doc);
 
         const ampLink = doc.querySelector('link[rel="amphtml"]');
         r.hasAmp = !!ampLink;
@@ -825,6 +905,8 @@
         r.pageSizeKb = Math.round(html.length / 1024);
 
         r.isMobileAdapted = r.hasViewport && r.hasMediaQueries;
+
+        r.analytics = detectAnalytics(html, doc);
 
         return r;
     }
@@ -877,6 +959,9 @@
         results.isHttps = url.startsWith('https://');
         results.sslValid = results.isHttps;
 
+        results.cdn = detectCDN(headers);
+        results.hosting = detectHosting(headers);
+
         const servicePages = await checkServicePages(domain, ['/privacy', '/terms', '/about', '/contact']);
         results.hasPrivacy = servicePages['/privacy'] || false;
         results.hasTerms = servicePages['/terms'] || false;
@@ -898,25 +983,6 @@
         const swLink = [...html.match(/<link[^>]+rel=["']manifest["'][^>]+href=["']([^"']+)["']/gi)?.map(m => m.match(/href=["']([^"']+)["']/)?.[1]) || []];
         results.hasManifest = swLink.length > 0;
         results.hasServiceWorker = html.includes('serviceWorker') || html.includes('navigator.serviceWorker');
-
-        const cdnHeaders = ['cf-', 'x-cdn', 'x-akamai', 'fastly', 'cloudfront'];
-        let cdn = 'Unknown';
-        for (const key of headers.keys()) {
-            if (cdnHeaders.some(h => key.toLowerCase().includes(h))) {
-                cdn = key.split('-')[0].toUpperCase();
-                break;
-            }
-        }
-        results.cdn = cdn;
-
-        const server = headers.get('server') || '';
-        let hosting = 'Unknown';
-        if (server.includes('nginx')) hosting = 'Nginx';
-        else if (server.includes('Apache')) hosting = 'Apache';
-        else if (server.includes('cloudflare')) hosting = 'Cloudflare';
-        else if (server.includes('github')) hosting = 'GitHub Pages';
-        else if (server.includes('IIS')) hosting = 'IIS';
-        results.hosting = hosting;
 
         results.http2 = headers.has('cf-ray') || (headers.has('x-powered-by') && headers.get('x-powered-by').includes('HTTP/2'));
         results.hasCompression = headers.has('content-encoding') && (headers.get('content-encoding').includes('gzip') || headers.get('content-encoding').includes('br'));
@@ -1013,7 +1079,7 @@
         return results;
     }
 
-    // ========== UI ==========
+    // ======================== UI ========================
     const urlInput = document.getElementById('url-input');
     const analyzeBtnUI = document.getElementById('analyze-btn');
     const progressContainer = document.getElementById('progress-container');
@@ -1144,14 +1210,14 @@
             hasViewport: data.hasViewport,
             viewportOk: data.viewportOk,
             hasMediaQueries: data.hasMediaQueries,
-            hasFlash: data.hasFlash ? t('yes') : t('no'),
-            isMobileAdapted: data.isMobileAdapted ? t('yes') : t('no'),
+            hasFlash: data.hasFlash,
+            isMobileAdapted: data.isMobileAdapted,
             mobileScore: data.mobileScore + '%',
             altPercent: data.altPercent + '%',
             ariaPercent: data.ariaPercent + '%',
-            hasLandmarks: data.hasLandmarks ? t('yes') : t('no'),
-            hasSkipLink: data.hasSkipLink ? t('yes') : t('no'),
-            hasLang: data.hasLang ? t('yes') : t('no'),
+            hasLandmarks: data.hasLandmarks,
+            hasSkipLink: data.hasSkipLink,
+            hasLang: data.hasLang,
             labelPercent: data.labelPercent + '%',
             accessibilityScore: data.accessibilityScore + '%',
             internalLinks: data.internalLinks,
@@ -1159,24 +1225,24 @@
             nofollowPercent: data.nofollowPercent + '%',
             ugcSponsoredPercent: data.ugcSponsoredPercent + '%',
             brokenLinksCount: data.brokenLinksCount,
-            tooManyLinks: data.tooManyLinks ? t('yes') + ' (>100)' : t('no'),
-            hasBreadcrumb: data.hasBreadcrumb ? t('yes') : t('no'),
-            hasPrevNext: data.hasPrevNext ? t('yes') : t('no'),
+            tooManyLinks: data.tooManyLinks,
+            hasBreadcrumb: data.hasBreadcrumb,
+            hasPrevNext: data.hasPrevNext,
             linkScore: data.linkScore + '%',
             cms: data.cms || 'Unknown',
             jsFramework: data.jsFramework || 'Unknown',
             analytics: data.analytics || t('notFound'),
             cdn: data.cdn || 'Unknown',
             hosting: data.hosting || 'Unknown',
-            hasRobots: data.hasRobots ? t('yes') : t('no'),
-            hasSitemap: data.hasSitemap ? t('yes') : t('no'),
-            hasCustom404: data.hasCustom404 ? t('yes') : t('no'),
-            hasAmp: data.hasAmp ? t('yes') : t('no'),
-            hasWebp: data.hasWebp ? t('yes') : t('no'),
-            hasLazyLoading: data.hasLazyLoading ? t('yes') : t('no'),
-            hasServiceWorker: data.hasServiceWorker ? t('yes') : t('no'),
-            hasDoctype: data.hasDoctype ? t('yes') : t('no'),
-            hasCharset: data.hasCharset ? t('yes') : t('no')
+            hasRobots: data.hasRobots,
+            hasSitemap: data.hasSitemap,
+            hasCustom404: data.hasCustom404,
+            hasAmp: data.hasAmp,
+            hasWebp: data.hasWebp,
+            hasLazyLoading: data.hasLazyLoading,
+            hasServiceWorker: data.hasServiceWorker,
+            hasDoctype: data.hasDoctype,
+            hasCharset: data.hasCharset
         };
 
         const goodMap = {
@@ -1256,7 +1322,10 @@
                 nameSpan.textContent = tm(key);
                 const valueSpan = document.createElement('span');
                 valueSpan.className = 'value';
-                const val = valueMap[key] !== undefined ? valueMap[key] : '';
+                let val = valueMap[key] !== undefined ? valueMap[key] : '';
+                if (typeof val === 'boolean') {
+                    val = val ? t('yes') : t('no');
+                }
                 if (goodMap[key] !== undefined) {
                     valueSpan.classList.add(goodMap[key] ? 'good' : 'bad');
                 }
@@ -1271,30 +1340,26 @@
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // ========== PDF generation ==========
+    // ======================== PDF ========================
     function generatePDF() {
         const data = window._lastResults;
         if (!data) return;
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'pt', 'a4');
-        const margin = 40;
-        let y = margin;
-
-        doc.setFontSize(22);
-        doc.text('My Dear Site', margin, y);
-        y += 30;
-        doc.setFontSize(14);
         const url = urlInput.value.trim();
-        doc.text(t('pdfTitle') + ': ' + url, margin, y);
-        y += 25;
-        doc.setFontSize(12);
-        doc.text(t('pdfScore') + ': ' + data.overallScore + ' / 100', margin, y);
-        y += 20;
-        doc.text(t('pdfVerdict') + ': ' + getVerdictLabel(data.overallScore), margin, y);
-        y += 30;
+        const score = data.overallScore || 0;
+        const verdict = getVerdictLabel(score);
 
-        // Collect all metrics
+        const lines = [];
+        lines.push('My Dear Site');
+        lines.push('');
+        lines.push(t('pdfTitle') + ': ' + url);
+        lines.push('');
+        lines.push(t('pdfScore') + ': ' + score + ' / 100');
+        lines.push(t('pdfVerdict') + ': ' + verdict);
+        lines.push('');
+        lines.push('========================================');
+        lines.push('');
+
         const metricKeys = {
             security: ['isHttps','sslValid','hasHsts','hasCsp','hasXFrame','hasXContentType','hasReferrerPolicy','hasPermissionsPolicy','mixedContentCount','securityScore'],
             perf: ['pageSizeKb','totalResources','totalJs','totalCss','totalImages','http2','hasCompression','performanceScore'],
@@ -1303,6 +1368,16 @@
             a11y: ['altPercent','ariaPercent','hasLandmarks','hasSkipLink','hasLang','labelPercent','accessibilityScore'],
             links: ['internalLinks','externalLinks','nofollowPercent','ugcSponsoredPercent','brokenLinksCount','tooManyLinks','hasBreadcrumb','hasPrevNext','linkScore'],
             tech: ['cms','jsFramework','analytics','cdn','hosting','hasRobots','hasSitemap','hasCustom404','hasAmp','hasWebp','hasLazyLoading','hasServiceWorker','hasDoctype','hasCharset']
+        };
+
+        const blockTitles = {
+            security: tb('security'),
+            perf: tb('perf'),
+            seo: tb('seo'),
+            mobile: tb('mobile'),
+            a11y: tb('a11y'),
+            links: tb('links'),
+            tech: tb('tech')
         };
 
         const valueMap = {
@@ -1376,35 +1451,27 @@
             hasCharset: data.hasCharset ? t('yes') : t('no')
         };
 
-        const blockTitles = {
-            security: tb('security'),
-            perf: tb('perf'),
-            seo: tb('seo'),
-            mobile: tb('mobile'),
-            a11y: tb('a11y'),
-            links: tb('links'),
-            tech: tb('tech')
-        };
-
         for (const blockKey of Object.keys(blockTitles)) {
             const keys = metricKeys[blockKey];
-            if (y > 700) { doc.addPage(); y = margin; }
-            doc.setFontSize(14);
-            doc.text(blockTitles[blockKey], margin, y);
-            y += 20;
-            doc.setFontSize(10);
+            lines.push(blockTitles[blockKey]);
+            lines.push('----------------------------------------');
             for (const key of keys) {
                 const name = tm(key);
                 const val = valueMap[key] !== undefined ? valueMap[key] : '';
-                const text = name + ': ' + val;
-                doc.text(text, margin + 10, y);
-                y += 16;
-                if (y > 750) { doc.addPage(); y = margin; }
+                lines.push('  ' + name + ': ' + val);
             }
-            y += 10;
+            lines.push('');
         }
 
-        doc.save('MyDearSite_report.pdf');
+        const content = lines.join('\n');
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'MyDearSite_report.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
     }
 
     pdfDownloadBtn.addEventListener('click', generatePDF);
