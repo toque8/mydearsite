@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Dear Site</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>MDS</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>M</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -16,12 +17,38 @@
             max-width: 1200px;
             margin: 0 auto;
         }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.25rem;
+        }
         h1 {
             font-weight: 400;
             font-size: 2.2rem;
-            letter-spacing: -0.5px;
+            letter-spacing: -1px;
             color: #5a3f34;
-            margin-bottom: 0.25rem;
+            font-family: 'Courier New', monospace;
+        }
+        .lang-switch {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #8a7a6e;
+        }
+        .lang-switch span {
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .lang-switch span.active {
+            background: #9b7b64;
+            color: #fff;
+        }
+        .lang-switch span:not(.active):hover {
+            background: #e6ddd5;
         }
         .subtitle {
             color: #8a7a6e;
@@ -157,14 +184,7 @@
             border-bottom: 2px solid #e6ddd5;
             padding-bottom: 0.5rem;
             margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
             font-size: 1.1rem;
-        }
-        .block h3 span {
-            font-weight: 400;
-            color: #8a7a6e;
-            font-size: 0.9rem;
         }
         .metric {
             display: flex;
@@ -182,6 +202,22 @@
         .metric .value.good { color: #4a7b5c; }
         .metric .value.warn { color: #b58a5e; }
         .metric .value.bad { color: #b45a4a; }
+        .pdf-btn {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .pdf-btn button {
+            background: #9b7b64;
+            border: none;
+            padding: 0.7rem 3rem;
+            border-radius: 30px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .pdf-btn button:hover { background: #7f6552; }
         .footer {
             margin-top: 3rem;
             text-align: center;
@@ -194,16 +230,23 @@
             .input-area { flex-direction: column; align-items: stretch; }
             .summary { flex-direction: column; align-items: start; }
             .blocks { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: start; gap: 0.5rem; }
         }
     </style>
 </head>
 <body>
 
-<h1>My Dear Site</h1>
-<div class="subtitle">Технический паспорт сайта — 80+ метрик за 10 секунд</div>
+<div class="header">
+    <h1>My Dear Site</h1>
+    <div class="lang-switch">
+        <span id="lang-ru" class="active" data-lang="ru">Ru</span>
+        <span id="lang-en" data-lang="en">En</span>
+    </div>
+</div>
+<div class="subtitle" id="subtitle">Быстрый и детальный технический анализ вашего сайта</div>
 
 <div class="input-area">
-    <label for="url-input">Введите URL</label>
+    <label for="url-input" id="label-url">Введите URL</label>
     <input type="url" id="url-input" placeholder="https://example.com" value="https://example.com">
     <button id="analyze-btn">Анализировать</button>
 </div>
@@ -217,16 +260,296 @@
     <div class="summary" id="summary-box">
         <div class="score-box">
             <span class="score-number" id="score-number">—</span>
-            <span class="score-label">/ 100</span>
+            <span class="score-label" id="score-label">/ 100</span>
         </div>
         <div class="verdict" id="verdict-text">Ожидание анализа</div>
     </div>
     <div class="blocks" id="blocks-container"></div>
+    <div class="pdf-btn"><button id="pdf-download">Скачать PDF</button></div>
 </div>
 
-<div class="footer">My Dear Site — анализ без серверов. Данные не покидают браузер.</div>
+<div class="footer" id="footer-text">My Dear Site — быстрый и детальный технический анализ вашего сайта</div>
 
 <script>
+    // ========== TRANSLATIONS ==========
+    const LANG = {
+        ru: {
+            subtitle: 'Быстрый и детальный технический анализ вашего сайта',
+            labelUrl: 'Введите URL',
+            analyzeBtn: 'Анализировать',
+            progress: ['Загрузка данных...', 'Анализ структуры...', 'Проверка безопасности...', 'Оценка производительности...', 'Проверка SEO...', 'Анализ ссылок...', 'Проверка доступности...', 'Завершаем...'],
+            scoreLabel: '/ 100',
+            verdicts: [
+                { min: 90, label: 'Отлично' },
+                { min: 70, label: 'Хорошо' },
+                { min: 50, label: 'Удовлетворительно' },
+                { min: 30, label: 'Требует улучшения' },
+                { min: 0, label: 'Критическое состояние' }
+            ],
+            blocks: {
+                security: 'Безопасность',
+                perf: 'Производительность',
+                seo: 'SEO',
+                mobile: 'Мобильность',
+                a11y: 'Доступность',
+                links: 'Ссылки',
+                tech: 'Технологии'
+            },
+            metrics: {
+                isHttps: 'HTTPS',
+                sslValid: 'SSL валиден',
+                hasHsts: 'HSTS',
+                hasCsp: 'CSP',
+                hasXFrame: 'X-Frame-Options',
+                hasXContentType: 'X-Content-Type-Options',
+                hasReferrerPolicy: 'Referrer-Policy',
+                hasPermissionsPolicy: 'Permissions-Policy',
+                mixedContentCount: 'Mixed Content',
+                securityScore: 'Security Score',
+                pageSizeKb: 'Размер страницы',
+                totalResources: 'Количество запросов',
+                totalJs: 'JS файлов',
+                totalCss: 'CSS файлов',
+                totalImages: 'Изображений',
+                http2: 'HTTP/2',
+                hasCompression: 'Сжатие',
+                performanceScore: 'Performance Score',
+                hasTitle: 'Наличие title',
+                titleLength: 'Длина title',
+                hasDescription: 'Наличие description',
+                descLength: 'Длина description',
+                hasH1: 'Наличие h1',
+                h1Count: 'Количество h1',
+                headingHierarchyOk: 'Иерархия заголовков',
+                ogStatus: 'Open Graph',
+                hasTwitterCard: 'Twitter Cards',
+                hasHreflang: 'Hreflang',
+                hasJsonLd: 'JSON-LD',
+                hasCanonical: 'Canonical',
+                hasFavicon: 'Favicon',
+                seoScore: 'SEO Score',
+                hasViewport: 'Viewport meta',
+                viewportOk: 'Viewport корректный',
+                hasMediaQueries: 'Медиа-запросы',
+                hasFlash: 'Flash-контент',
+                isMobileAdapted: 'Адаптировано под мобильные',
+                mobileScore: 'Mobile Score',
+                altPercent: 'alt у изображений',
+                ariaPercent: 'ARIA у интерактивных',
+                hasLandmarks: 'Landmark-роли',
+                hasSkipLink: 'Ссылка skip-to-content',
+                hasLang: 'Атрибут lang',
+                labelPercent: 'label для полей',
+                accessibilityScore: 'Accessibility Score',
+                internalLinks: 'Внутренние ссылки',
+                externalLinks: 'Внешние ссылки',
+                nofollowPercent: '% nofollow',
+                ugcSponsoredPercent: '% ugc/sponsored',
+                brokenLinksCount: 'Битых ссылок',
+                tooManyLinks: 'Слишком много ссылок',
+                hasBreadcrumb: 'Хлебные крошки',
+                hasPrevNext: 'prev/next',
+                linkScore: 'Link Score',
+                cms: 'CMS',
+                jsFramework: 'JS фреймворк',
+                analytics: 'Аналитика/Реклама',
+                cdn: 'CDN',
+                hosting: 'Хостинг',
+                hasRobots: 'robots.txt',
+                hasSitemap: 'sitemap.xml',
+                hasCustom404: 'Кастомная 404',
+                hasAmp: 'AMP',
+                hasWebp: 'WebP',
+                hasLazyLoading: 'Ленивая загрузка',
+                hasServiceWorker: 'Service Worker',
+                hasDoctype: 'DOCTYPE html',
+                hasCharset: 'Кодировка UTF-8'
+            },
+            yes: 'Да',
+            no: 'Нет',
+            ok: 'OK',
+            broken: 'Нарушена',
+            present: 'Есть',
+            incomplete: 'Неполный',
+            notFound: 'Не обнаружено',
+            footer: 'My Dear Site — быстрый и детальный технический анализ вашего сайта',
+            pdfTitle: 'Отчет по сайту',
+            pdfScore: 'Общий балл',
+            pdfVerdict: 'Вердикт',
+            pdfDownload: 'Скачать PDF',
+            waiting: 'Ожидание анализа'
+        },
+        en: {
+            subtitle: 'Fast and detailed technical analysis of your website',
+            labelUrl: 'Enter URL',
+            analyzeBtn: 'Analyze',
+            progress: ['Loading data...', 'Analyzing structure...', 'Checking security...', 'Evaluating performance...', 'Checking SEO...', 'Analyzing links...', 'Checking accessibility...', 'Finishing...'],
+            scoreLabel: '/ 100',
+            verdicts: [
+                { min: 90, label: 'Excellent' },
+                { min: 70, label: 'Good' },
+                { min: 50, label: 'Satisfactory' },
+                { min: 30, label: 'Needs improvement' },
+                { min: 0, label: 'Critical' }
+            ],
+            blocks: {
+                security: 'Security',
+                perf: 'Performance',
+                seo: 'SEO',
+                mobile: 'Mobile',
+                a11y: 'Accessibility',
+                links: 'Links',
+                tech: 'Technology'
+            },
+            metrics: {
+                isHttps: 'HTTPS',
+                sslValid: 'SSL valid',
+                hasHsts: 'HSTS',
+                hasCsp: 'CSP',
+                hasXFrame: 'X-Frame-Options',
+                hasXContentType: 'X-Content-Type-Options',
+                hasReferrerPolicy: 'Referrer-Policy',
+                hasPermissionsPolicy: 'Permissions-Policy',
+                mixedContentCount: 'Mixed Content',
+                securityScore: 'Security Score',
+                pageSizeKb: 'Page size',
+                totalResources: 'Total requests',
+                totalJs: 'JS files',
+                totalCss: 'CSS files',
+                totalImages: 'Images',
+                http2: 'HTTP/2',
+                hasCompression: 'Compression',
+                performanceScore: 'Performance Score',
+                hasTitle: 'Title exists',
+                titleLength: 'Title length',
+                hasDescription: 'Description exists',
+                descLength: 'Description length',
+                hasH1: 'H1 exists',
+                h1Count: 'H1 count',
+                headingHierarchyOk: 'Heading hierarchy',
+                ogStatus: 'Open Graph',
+                hasTwitterCard: 'Twitter Cards',
+                hasHreflang: 'Hreflang',
+                hasJsonLd: 'JSON-LD',
+                hasCanonical: 'Canonical',
+                hasFavicon: 'Favicon',
+                seoScore: 'SEO Score',
+                hasViewport: 'Viewport meta',
+                viewportOk: 'Viewport correct',
+                hasMediaQueries: 'Media queries',
+                hasFlash: 'Flash content',
+                isMobileAdapted: 'Mobile adapted',
+                mobileScore: 'Mobile Score',
+                altPercent: 'Alt text on images',
+                ariaPercent: 'ARIA on interactive',
+                hasLandmarks: 'Landmark roles',
+                hasSkipLink: 'Skip-to-content link',
+                hasLang: 'lang attribute',
+                labelPercent: 'Labels for fields',
+                accessibilityScore: 'Accessibility Score',
+                internalLinks: 'Internal links',
+                externalLinks: 'External links',
+                nofollowPercent: '% nofollow',
+                ugcSponsoredPercent: '% ugc/sponsored',
+                brokenLinksCount: 'Broken links',
+                tooManyLinks: 'Too many links',
+                hasBreadcrumb: 'Breadcrumb',
+                hasPrevNext: 'prev/next',
+                linkScore: 'Link Score',
+                cms: 'CMS',
+                jsFramework: 'JS framework',
+                analytics: 'Analytics/Ads',
+                cdn: 'CDN',
+                hosting: 'Hosting',
+                hasRobots: 'robots.txt',
+                hasSitemap: 'sitemap.xml',
+                hasCustom404: 'Custom 404',
+                hasAmp: 'AMP',
+                hasWebp: 'WebP',
+                hasLazyLoading: 'Lazy loading',
+                hasServiceWorker: 'Service Worker',
+                hasDoctype: 'DOCTYPE html',
+                hasCharset: 'UTF-8 charset'
+            },
+            yes: 'Yes',
+            no: 'No',
+            ok: 'OK',
+            broken: 'Broken',
+            present: 'Present',
+            incomplete: 'Incomplete',
+            notFound: 'Not detected',
+            footer: 'My Dear Site — fast and detailed technical analysis of your website',
+            pdfTitle: 'Report for',
+            pdfScore: 'Overall score',
+            pdfVerdict: 'Verdict',
+            pdfDownload: 'Download PDF',
+            waiting: 'Waiting for analysis'
+        }
+    };
+
+    let currentLang = 'ru';
+    function t(key) { return LANG[currentLang][key] || key; }
+    function tm(key) { return LANG[currentLang].metrics[key] || key; }
+    function tb(key) { return LANG[currentLang].blocks[key] || key; }
+
+    function getVerdictLabel(score) {
+        const list = LANG[currentLang].verdicts;
+        for (const v of list) {
+            if (score >= v.min) return v.label;
+        }
+        return list[list.length-1].label;
+    }
+
+    function translateValue(value, key) {
+        if (typeof value === 'boolean') {
+            return value ? t('yes') : t('no');
+        }
+        if (value === 'OK' || value === 'Нарушена') {
+            if (value === 'OK') return t('ok');
+            if (value === 'Нарушена') return t('broken');
+        }
+        if (value === 'Есть' || value === 'Неполный') {
+            if (value === 'Есть') return t('present');
+            if (value === 'Неполный') return t('incomplete');
+        }
+        if (value === 'Не обнаружено') return t('notFound');
+        return value;
+    }
+
+    // ========== DOM refs ==========
+    const langRu = document.getElementById('lang-ru');
+    const langEn = document.getElementById('lang-en');
+    const subtitle = document.getElementById('subtitle');
+    const labelUrl = document.getElementById('label-url');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const progressMsg = document.getElementById('progress-message');
+    const scoreLabel = document.getElementById('score-label');
+    const verdictText = document.getElementById('verdict-text');
+    const footerText = document.getElementById('footer-text');
+    const pdfBtn = document.getElementById('pdf-download');
+
+    // ========== Language switch ==========
+    function setLang(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-switch span').forEach(el => el.classList.remove('active'));
+        document.getElementById('lang-' + lang).classList.add('active');
+        subtitle.textContent = t('subtitle');
+        labelUrl.textContent = t('labelUrl');
+        analyzeBtn.textContent = t('analyzeBtn');
+        scoreLabel.textContent = t('scoreLabel');
+        footerText.textContent = t('footer');
+        pdfBtn.textContent = t('pdfDownload');
+        if (document.getElementById('results').classList.contains('active')) {
+            // перерисовать результаты на новом языке
+            const data = window._lastResults;
+            if (data) displayResults(data);
+        }
+    }
+
+    langRu.addEventListener('click', () => setLang('ru'));
+    langEn.addEventListener('click', () => setLang('en'));
+
+    // ========== Core functions ==========
     function getDomain(url) {
         try { return new URL(url).hostname; } catch { return ''; }
     }
@@ -501,6 +824,8 @@
         r.totalResources = scriptsCount + stylesCount + imagesCount;
         r.pageSizeKb = Math.round(html.length / 1024);
 
+        r.isMobileAdapted = r.hasViewport && r.hasMediaQueries;
+
         return r;
     }
 
@@ -688,50 +1013,42 @@
         return results;
     }
 
+    // ========== UI ==========
     const urlInput = document.getElementById('url-input');
-    const analyzeBtn = document.getElementById('analyze-btn');
+    const analyzeBtnUI = document.getElementById('analyze-btn');
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar');
-    const progressMsg = document.getElementById('progress-message');
+    const progressMsgUI = document.getElementById('progress-message');
     const resultsDiv = document.getElementById('results');
     const scoreNumber = document.getElementById('score-number');
-    const verdictText = document.getElementById('verdict-text');
+    const verdictTextUI = document.getElementById('verdict-text');
     const blocksContainer = document.getElementById('blocks-container');
-
-    const funnyMessages = [
-        'Загрузка данных...',
-        'Анализ структуры...',
-        'Проверка безопасности...',
-        'Оценка производительности...',
-        'Проверка SEO...',
-        'Анализ ссылок...',
-        'Проверка доступности...',
-        'Завершаем...'
-    ];
+    const pdfDownloadBtn = document.getElementById('pdf-download');
 
     let progressInterval;
 
     function updateProgress(percent, message) {
         progressBar.style.width = percent + '%';
-        if (message) progressMsg.textContent = message;
+        if (message) progressMsgUI.textContent = message;
     }
 
     async function runAnalysis() {
         const url = urlInput.value.trim();
         if (!url) {
-            alert('Введите URL');
+            alert(t('labelUrl') + '?');
             return;
         }
 
         resultsDiv.classList.remove('active');
         blocksContainer.innerHTML = '';
         progressContainer.classList.add('active');
-        updateProgress(0, 'Начинаем...');
-        analyzeBtn.disabled = true;
+        updateProgress(0, t('progress')[0]);
+        analyzeBtnUI.disabled = true;
 
         let msgIndex = 0;
         progressInterval = setInterval(() => {
-            const msg = funnyMessages[msgIndex % funnyMessages.length];
+            const msgs = t('progress');
+            const msg = msgs[msgIndex % msgs.length];
             updateProgress(progressBar.style.width.replace('%','') || 0, msg);
             msgIndex++;
         }, 1500);
@@ -741,15 +1058,16 @@
             const progressStep = setInterval(() => {
                 if (progress < 90) {
                     progress += Math.random() * 5;
-                    updateProgress(Math.min(progress, 90), progressMsg.textContent);
+                    updateProgress(Math.min(progress, 90), progressMsgUI.textContent);
                 }
             }, 300);
 
             const data = await analyzeSite(url);
             clearInterval(progressStep);
             clearInterval(progressInterval);
-            updateProgress(100, 'Готово');
+            updateProgress(100, t('progress')[7]);
 
+            window._lastResults = data;
             displayResults(data);
             resultsDiv.classList.add('active');
             progressContainer.classList.remove('active');
@@ -759,7 +1077,7 @@
             progressContainer.classList.remove('active');
             alert('Ошибка: ' + err.message);
         } finally {
-            analyzeBtn.disabled = false;
+            analyzeBtnUI.disabled = false;
         }
     }
 
@@ -767,118 +1085,182 @@
         const score = data.overallScore || 0;
         scoreNumber.textContent = score;
 
-        let verdict = '';
-        if (score >= 90) verdict = 'Эталон';
-        else if (score >= 70) verdict = 'Отлично';
-        else if (score >= 50) verdict = 'Средне';
-        else if (score >= 30) verdict = 'Плохо';
-        else verdict = 'Критично';
-        verdictText.innerHTML = `${verdict} <small>по 100-балльной шкале</small>`;
+        const verdictLabel = getVerdictLabel(score);
+        verdictTextUI.innerHTML = `${verdictLabel} <small>${t('scoreLabel')}</small>`;
 
-        const blocks = [
-            { title: 'Безопасность', key: 'security', metrics: [
-                { name: 'HTTPS', value: data.isHttps ? 'Да' : 'Нет', good: data.isHttps },
-                { name: 'SSL валиден', value: data.sslValid ? 'Да' : 'Нет', good: data.sslValid },
-                { name: 'HSTS', value: data.hasHsts ? 'Да' : 'Нет', good: data.hasHsts },
-                { name: 'CSP', value: data.hasCsp ? 'Да' : 'Нет', good: data.hasCsp },
-                { name: 'X-Frame-Options', value: data.hasXFrame ? 'Да' : 'Нет', good: data.hasXFrame },
-                { name: 'X-Content-Type-Options', value: data.hasXContentType ? 'Да' : 'Нет', good: data.hasXContentType },
-                { name: 'Referrer-Policy', value: data.hasReferrerPolicy ? 'Да' : 'Нет', good: data.hasReferrerPolicy },
-                { name: 'Permissions-Policy', value: data.hasPermissionsPolicy ? 'Да' : 'Нет', good: data.hasPermissionsPolicy },
-                { name: 'Mixed Content', value: data.mixedContentCount || 0, good: data.mixedContentCount === 0 },
-                { name: 'Security Score', value: data.securityScore + '%', good: data.securityScore >= 70 }
-            ]},
-            { title: 'Производительность', key: 'perf', metrics: [
-                { name: 'Размер страницы', value: data.pageSizeKb + ' KB', good: data.pageSizeKb < 500 },
-                { name: 'Количество запросов', value: data.totalResources || 0, good: (data.totalResources || 0) < 30 },
-                { name: 'JS файлов', value: data.totalJs || 0, good: (data.totalJs || 0) < 20 },
-                { name: 'CSS файлов', value: data.totalCss || 0, good: (data.totalCss || 0) < 10 },
-                { name: 'Изображений', value: data.totalImages || 0, good: (data.totalImages || 0) < 20 },
-                { name: 'HTTP/2', value: data.http2 ? 'Да' : 'Нет', good: data.http2 },
-                { name: 'Сжатие', value: data.hasCompression ? 'Да' : 'Нет', good: data.hasCompression },
-                { name: 'Performance Score', value: data.performanceScore + '%', good: data.performanceScore >= 70 }
-            ]},
-            { title: 'SEO и структура', key: 'seo', metrics: [
-                { name: 'Наличие title', value: data.hasTitle ? 'Да' : 'Нет', good: data.hasTitle },
-                { name: 'Длина title', value: data.titleLength + ' симв.', good: data.titleLength >= 30 && data.titleLength <= 60 },
-                { name: 'Наличие description', value: data.hasDescription ? 'Да' : 'Нет', good: data.hasDescription },
-                { name: 'Длина description', value: data.descLength + ' симв.', good: data.descLength >= 120 && data.descLength <= 160 },
-                { name: 'Наличие h1', value: data.hasH1 ? 'Да' : 'Нет', good: data.hasH1 },
-                { name: 'Количество h1', value: data.h1Count, good: data.h1Count === 1 },
-                { name: 'Иерархия заголовков', value: data.headingHierarchyOk ? 'OK' : 'Нарушена', good: data.headingHierarchyOk },
-                { name: 'Open Graph', value: (data.hasOgTitle && data.hasOgDesc && data.hasOgImage) ? 'Есть' : 'Неполный', good: data.hasOgTitle && data.hasOgDesc && data.hasOgImage },
-                { name: 'Twitter Cards', value: data.hasTwitterCard ? 'Да' : 'Нет', good: data.hasTwitterCard },
-                { name: 'Hreflang', value: data.hasHreflang ? 'Да' : 'Нет', good: data.hasHreflang },
-                { name: 'JSON-LD', value: data.hasJsonLd ? 'Да' : 'Нет', good: data.hasJsonLd },
-                { name: 'Canonical', value: data.hasCanonical ? 'Да' : 'Нет', good: data.hasCanonical },
-                { name: 'Favicon', value: data.hasFavicon ? 'Да' : 'Нет', good: data.hasFavicon },
-                { name: 'SEO Score', value: data.seoScore + '%', good: data.seoScore >= 70 }
-            ]},
-            { title: 'Мобильность', key: 'mobile', metrics: [
-                { name: 'Viewport meta', value: data.hasViewport ? 'Да' : 'Нет', good: data.hasViewport },
-                { name: 'Viewport корректный', value: data.viewportOk ? 'Да' : 'Нет', good: data.viewportOk },
-                { name: 'Медиа-запросы', value: data.hasMediaQueries ? 'Да' : 'Нет', good: data.hasMediaQueries },
-                { name: 'Flash-контент', value: data.hasFlash ? 'Есть' : 'Нет', good: !data.hasFlash },
-                { name: 'Mobile Score', value: data.mobileScore + '%', good: data.mobileScore >= 70 }
-            ]},
-            { title: 'Доступность', key: 'a11y', metrics: [
-                { name: 'alt у изображений', value: data.altPercent + '%', good: data.altPercent >= 80 },
-                { name: 'ARIA у интерактивных', value: data.ariaPercent + '%', good: data.ariaPercent >= 50 },
-                { name: 'Landmark-роли', value: data.hasLandmarks ? 'Да' : 'Нет', good: data.hasLandmarks },
-                { name: 'Ссылка skip-to-content', value: data.hasSkipLink ? 'Да' : 'Нет', good: data.hasSkipLink },
-                { name: 'Атрибут lang', value: data.hasLang ? 'Да' : 'Нет', good: data.hasLang },
-                { name: 'label для полей', value: data.labelPercent + '%', good: data.labelPercent >= 70 },
-                { name: 'Accessibility Score', value: data.accessibilityScore + '%', good: data.accessibilityScore >= 70 }
-            ]},
-            { title: 'Ссылки', key: 'links', metrics: [
-                { name: 'Внутренние ссылки', value: data.internalLinks || 0 },
-                { name: 'Внешние ссылки', value: data.externalLinks || 0 },
-                { name: '% nofollow', value: data.nofollowPercent + '%', good: data.nofollowPercent < 30 },
-                { name: '% ugc/sponsored', value: data.ugcSponsoredPercent + '%', good: data.ugcSponsoredPercent < 20 },
-                { name: 'Битых ссылок', value: data.brokenLinksCount || 0, good: data.brokenLinksCount === 0 },
-                { name: 'Слишком много ссылок', value: data.tooManyLinks ? 'Да (>100)' : 'Нет', good: !data.tooManyLinks },
-                { name: 'Хлебные крошки', value: data.hasBreadcrumb ? 'Да' : 'Нет', good: data.hasBreadcrumb },
-                { name: 'prev/next', value: data.hasPrevNext ? 'Да' : 'Нет', good: data.hasPrevNext },
-                { name: 'Link Score', value: data.linkScore + '%', good: data.linkScore >= 70 }
-            ]},
-            { title: 'Технологии и доп.', key: 'tech', metrics: [
-                { name: 'CMS', value: data.cms || 'Unknown' },
-                { name: 'JS фреймворк', value: data.jsFramework || 'Unknown' },
-                { name: 'Аналитика/Реклама', value: data.analytics || 'Не обнаружено' },
-                { name: 'CDN', value: data.cdn || 'Unknown' },
-                { name: 'Хостинг', value: data.hosting || 'Unknown' },
-                { name: 'robots.txt', value: data.hasRobots ? 'Да' : 'Нет', good: data.hasRobots },
-                { name: 'sitemap.xml', value: data.hasSitemap ? 'Да' : 'Нет', good: data.hasSitemap },
-                { name: 'Кастомная 404', value: data.hasCustom404 ? 'Да' : 'Нет', good: data.hasCustom404 },
-                { name: 'AMP', value: data.hasAmp ? 'Да' : 'Нет' },
-                { name: 'WebP', value: data.hasWebp ? 'Да' : 'Нет' },
-                { name: 'Ленивая загрузка', value: data.hasLazyLoading ? 'Да' : 'Нет' },
-                { name: 'Service Worker', value: data.hasServiceWorker ? 'Да' : 'Нет' },
-                { name: 'DOCTYPE html', value: data.hasDoctype ? 'Да' : 'Нет', good: data.hasDoctype },
-                { name: 'Кодировка UTF-8', value: data.hasCharset ? 'Да' : 'Нет', good: data.hasCharset }
-            ]}
-        ];
+        const metricKeys = {
+            security: ['isHttps','sslValid','hasHsts','hasCsp','hasXFrame','hasXContentType','hasReferrerPolicy','hasPermissionsPolicy','mixedContentCount','securityScore'],
+            perf: ['pageSizeKb','totalResources','totalJs','totalCss','totalImages','http2','hasCompression','performanceScore'],
+            seo: ['hasTitle','titleLength','hasDescription','descLength','hasH1','h1Count','headingHierarchyOk','ogStatus','hasTwitterCard','hasHreflang','hasJsonLd','hasCanonical','hasFavicon','seoScore'],
+            mobile: ['hasViewport','viewportOk','hasMediaQueries','hasFlash','isMobileAdapted','mobileScore'],
+            a11y: ['altPercent','ariaPercent','hasLandmarks','hasSkipLink','hasLang','labelPercent','accessibilityScore'],
+            links: ['internalLinks','externalLinks','nofollowPercent','ugcSponsoredPercent','brokenLinksCount','tooManyLinks','hasBreadcrumb','hasPrevNext','linkScore'],
+            tech: ['cms','jsFramework','analytics','cdn','hosting','hasRobots','hasSitemap','hasCustom404','hasAmp','hasWebp','hasLazyLoading','hasServiceWorker','hasDoctype','hasCharset']
+        };
+
+        const blockTitles = {
+            security: tb('security'),
+            perf: tb('perf'),
+            seo: tb('seo'),
+            mobile: tb('mobile'),
+            a11y: tb('a11y'),
+            links: tb('links'),
+            tech: tb('tech')
+        };
+
+        const valueMap = {
+            isHttps: data.isHttps,
+            sslValid: data.sslValid,
+            hasHsts: data.hasHsts,
+            hasCsp: data.hasCsp,
+            hasXFrame: data.hasXFrame,
+            hasXContentType: data.hasXContentType,
+            hasReferrerPolicy: data.hasReferrerPolicy,
+            hasPermissionsPolicy: data.hasPermissionsPolicy,
+            mixedContentCount: data.mixedContentCount,
+            securityScore: data.securityScore + '%',
+            pageSizeKb: data.pageSizeKb + ' KB',
+            totalResources: data.totalResources,
+            totalJs: data.totalJs,
+            totalCss: data.totalCss,
+            totalImages: data.totalImages,
+            http2: data.http2,
+            hasCompression: data.hasCompression,
+            performanceScore: data.performanceScore + '%',
+            hasTitle: data.hasTitle,
+            titleLength: data.titleLength + ' ' + (currentLang === 'ru' ? 'симв.' : 'chars'),
+            hasDescription: data.hasDescription,
+            descLength: data.descLength + ' ' + (currentLang === 'ru' ? 'симв.' : 'chars'),
+            hasH1: data.hasH1,
+            h1Count: data.h1Count,
+            headingHierarchyOk: data.headingHierarchyOk ? t('ok') : t('broken'),
+            ogStatus: (data.hasOgTitle && data.hasOgDesc && data.hasOgImage) ? t('present') : t('incomplete'),
+            hasTwitterCard: data.hasTwitterCard,
+            hasHreflang: data.hasHreflang,
+            hasJsonLd: data.hasJsonLd,
+            hasCanonical: data.hasCanonical,
+            hasFavicon: data.hasFavicon,
+            seoScore: data.seoScore + '%',
+            hasViewport: data.hasViewport,
+            viewportOk: data.viewportOk,
+            hasMediaQueries: data.hasMediaQueries,
+            hasFlash: data.hasFlash ? t('yes') : t('no'),
+            isMobileAdapted: data.isMobileAdapted ? t('yes') : t('no'),
+            mobileScore: data.mobileScore + '%',
+            altPercent: data.altPercent + '%',
+            ariaPercent: data.ariaPercent + '%',
+            hasLandmarks: data.hasLandmarks ? t('yes') : t('no'),
+            hasSkipLink: data.hasSkipLink ? t('yes') : t('no'),
+            hasLang: data.hasLang ? t('yes') : t('no'),
+            labelPercent: data.labelPercent + '%',
+            accessibilityScore: data.accessibilityScore + '%',
+            internalLinks: data.internalLinks,
+            externalLinks: data.externalLinks,
+            nofollowPercent: data.nofollowPercent + '%',
+            ugcSponsoredPercent: data.ugcSponsoredPercent + '%',
+            brokenLinksCount: data.brokenLinksCount,
+            tooManyLinks: data.tooManyLinks ? t('yes') + ' (>100)' : t('no'),
+            hasBreadcrumb: data.hasBreadcrumb ? t('yes') : t('no'),
+            hasPrevNext: data.hasPrevNext ? t('yes') : t('no'),
+            linkScore: data.linkScore + '%',
+            cms: data.cms || 'Unknown',
+            jsFramework: data.jsFramework || 'Unknown',
+            analytics: data.analytics || t('notFound'),
+            cdn: data.cdn || 'Unknown',
+            hosting: data.hosting || 'Unknown',
+            hasRobots: data.hasRobots ? t('yes') : t('no'),
+            hasSitemap: data.hasSitemap ? t('yes') : t('no'),
+            hasCustom404: data.hasCustom404 ? t('yes') : t('no'),
+            hasAmp: data.hasAmp ? t('yes') : t('no'),
+            hasWebp: data.hasWebp ? t('yes') : t('no'),
+            hasLazyLoading: data.hasLazyLoading ? t('yes') : t('no'),
+            hasServiceWorker: data.hasServiceWorker ? t('yes') : t('no'),
+            hasDoctype: data.hasDoctype ? t('yes') : t('no'),
+            hasCharset: data.hasCharset ? t('yes') : t('no')
+        };
+
+        const goodMap = {
+            isHttps: data.isHttps,
+            sslValid: data.sslValid,
+            hasHsts: data.hasHsts,
+            hasCsp: data.hasCsp,
+            hasXFrame: data.hasXFrame,
+            hasXContentType: data.hasXContentType,
+            hasReferrerPolicy: data.hasReferrerPolicy,
+            hasPermissionsPolicy: data.hasPermissionsPolicy,
+            mixedContentCount: data.mixedContentCount === 0,
+            securityScore: data.securityScore >= 70,
+            pageSizeKb: data.pageSizeKb < 500,
+            totalResources: data.totalResources < 30,
+            totalJs: data.totalJs < 20,
+            totalCss: data.totalCss < 10,
+            totalImages: data.totalImages < 20,
+            http2: data.http2,
+            hasCompression: data.hasCompression,
+            performanceScore: data.performanceScore >= 70,
+            hasTitle: data.hasTitle,
+            titleLength: data.titleLength >= 30 && data.titleLength <= 60,
+            hasDescription: data.hasDescription,
+            descLength: data.descLength >= 120 && data.descLength <= 160,
+            hasH1: data.hasH1,
+            h1Count: data.h1Count === 1,
+            headingHierarchyOk: data.headingHierarchyOk,
+            ogStatus: data.hasOgTitle && data.hasOgDesc && data.hasOgImage,
+            hasTwitterCard: data.hasTwitterCard,
+            hasHreflang: data.hasHreflang,
+            hasJsonLd: data.hasJsonLd,
+            hasCanonical: data.hasCanonical,
+            hasFavicon: data.hasFavicon,
+            seoScore: data.seoScore >= 70,
+            hasViewport: data.hasViewport,
+            viewportOk: data.viewportOk,
+            hasMediaQueries: data.hasMediaQueries,
+            hasFlash: !data.hasFlash,
+            isMobileAdapted: data.isMobileAdapted,
+            mobileScore: data.mobileScore >= 70,
+            altPercent: data.altPercent >= 80,
+            ariaPercent: data.ariaPercent >= 50,
+            hasLandmarks: data.hasLandmarks,
+            hasSkipLink: data.hasSkipLink,
+            hasLang: data.hasLang,
+            labelPercent: data.labelPercent >= 70,
+            accessibilityScore: data.accessibilityScore >= 70,
+            nofollowPercent: data.nofollowPercent < 30,
+            ugcSponsoredPercent: data.ugcSponsoredPercent < 20,
+            brokenLinksCount: data.brokenLinksCount === 0,
+            tooManyLinks: !data.tooManyLinks,
+            hasBreadcrumb: data.hasBreadcrumb,
+            hasPrevNext: data.hasPrevNext,
+            linkScore: data.linkScore >= 70,
+            hasRobots: data.hasRobots,
+            hasSitemap: data.hasSitemap,
+            hasCustom404: data.hasCustom404,
+            hasDoctype: data.hasDoctype,
+            hasCharset: data.hasCharset
+        };
 
         blocksContainer.innerHTML = '';
-        for (const block of blocks) {
+        for (const blockKey of Object.keys(blockTitles)) {
+            const keys = metricKeys[blockKey];
             const blockDiv = document.createElement('div');
             blockDiv.className = 'block';
             const titleSpan = document.createElement('h3');
-            titleSpan.innerHTML = `${block.title} <span>${block.metrics.length} метрик</span>`;
+            titleSpan.textContent = blockTitles[blockKey];
             blockDiv.appendChild(titleSpan);
 
-            for (const metric of block.metrics) {
+            for (const key of keys) {
                 const row = document.createElement('div');
                 row.className = 'metric';
                 const nameSpan = document.createElement('span');
                 nameSpan.className = 'name';
-                nameSpan.textContent = metric.name;
+                nameSpan.textContent = tm(key);
                 const valueSpan = document.createElement('span');
                 valueSpan.className = 'value';
-                if (metric.good !== undefined) {
-                    valueSpan.classList.add(metric.good ? 'good' : 'bad');
+                const val = valueMap[key] !== undefined ? valueMap[key] : '';
+                if (goodMap[key] !== undefined) {
+                    valueSpan.classList.add(goodMap[key] ? 'good' : 'bad');
                 }
-                valueSpan.textContent = metric.value;
+                valueSpan.textContent = val;
                 row.appendChild(nameSpan);
                 row.appendChild(valueSpan);
                 blockDiv.appendChild(row);
@@ -889,7 +1271,145 @@
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
     }
 
-    analyzeBtn.addEventListener('click', runAnalysis);
+    // ========== PDF generation ==========
+    function generatePDF() {
+        const data = window._lastResults;
+        if (!data) return;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'pt', 'a4');
+        const margin = 40;
+        let y = margin;
+
+        doc.setFontSize(22);
+        doc.text('My Dear Site', margin, y);
+        y += 30;
+        doc.setFontSize(14);
+        const url = urlInput.value.trim();
+        doc.text(t('pdfTitle') + ': ' + url, margin, y);
+        y += 25;
+        doc.setFontSize(12);
+        doc.text(t('pdfScore') + ': ' + data.overallScore + ' / 100', margin, y);
+        y += 20;
+        doc.text(t('pdfVerdict') + ': ' + getVerdictLabel(data.overallScore), margin, y);
+        y += 30;
+
+        // Collect all metrics
+        const metricKeys = {
+            security: ['isHttps','sslValid','hasHsts','hasCsp','hasXFrame','hasXContentType','hasReferrerPolicy','hasPermissionsPolicy','mixedContentCount','securityScore'],
+            perf: ['pageSizeKb','totalResources','totalJs','totalCss','totalImages','http2','hasCompression','performanceScore'],
+            seo: ['hasTitle','titleLength','hasDescription','descLength','hasH1','h1Count','headingHierarchyOk','ogStatus','hasTwitterCard','hasHreflang','hasJsonLd','hasCanonical','hasFavicon','seoScore'],
+            mobile: ['hasViewport','viewportOk','hasMediaQueries','hasFlash','isMobileAdapted','mobileScore'],
+            a11y: ['altPercent','ariaPercent','hasLandmarks','hasSkipLink','hasLang','labelPercent','accessibilityScore'],
+            links: ['internalLinks','externalLinks','nofollowPercent','ugcSponsoredPercent','brokenLinksCount','tooManyLinks','hasBreadcrumb','hasPrevNext','linkScore'],
+            tech: ['cms','jsFramework','analytics','cdn','hosting','hasRobots','hasSitemap','hasCustom404','hasAmp','hasWebp','hasLazyLoading','hasServiceWorker','hasDoctype','hasCharset']
+        };
+
+        const valueMap = {
+            isHttps: data.isHttps ? t('yes') : t('no'),
+            sslValid: data.sslValid ? t('yes') : t('no'),
+            hasHsts: data.hasHsts ? t('yes') : t('no'),
+            hasCsp: data.hasCsp ? t('yes') : t('no'),
+            hasXFrame: data.hasXFrame ? t('yes') : t('no'),
+            hasXContentType: data.hasXContentType ? t('yes') : t('no'),
+            hasReferrerPolicy: data.hasReferrerPolicy ? t('yes') : t('no'),
+            hasPermissionsPolicy: data.hasPermissionsPolicy ? t('yes') : t('no'),
+            mixedContentCount: data.mixedContentCount,
+            securityScore: data.securityScore + '%',
+            pageSizeKb: data.pageSizeKb + ' KB',
+            totalResources: data.totalResources,
+            totalJs: data.totalJs,
+            totalCss: data.totalCss,
+            totalImages: data.totalImages,
+            http2: data.http2 ? t('yes') : t('no'),
+            hasCompression: data.hasCompression ? t('yes') : t('no'),
+            performanceScore: data.performanceScore + '%',
+            hasTitle: data.hasTitle ? t('yes') : t('no'),
+            titleLength: data.titleLength + ' ' + (currentLang === 'ru' ? 'симв.' : 'chars'),
+            hasDescription: data.hasDescription ? t('yes') : t('no'),
+            descLength: data.descLength + ' ' + (currentLang === 'ru' ? 'симв.' : 'chars'),
+            hasH1: data.hasH1 ? t('yes') : t('no'),
+            h1Count: data.h1Count,
+            headingHierarchyOk: data.headingHierarchyOk ? t('ok') : t('broken'),
+            ogStatus: (data.hasOgTitle && data.hasOgDesc && data.hasOgImage) ? t('present') : t('incomplete'),
+            hasTwitterCard: data.hasTwitterCard ? t('yes') : t('no'),
+            hasHreflang: data.hasHreflang ? t('yes') : t('no'),
+            hasJsonLd: data.hasJsonLd ? t('yes') : t('no'),
+            hasCanonical: data.hasCanonical ? t('yes') : t('no'),
+            hasFavicon: data.hasFavicon ? t('yes') : t('no'),
+            seoScore: data.seoScore + '%',
+            hasViewport: data.hasViewport ? t('yes') : t('no'),
+            viewportOk: data.viewportOk ? t('yes') : t('no'),
+            hasMediaQueries: data.hasMediaQueries ? t('yes') : t('no'),
+            hasFlash: data.hasFlash ? t('yes') : t('no'),
+            isMobileAdapted: data.isMobileAdapted ? t('yes') : t('no'),
+            mobileScore: data.mobileScore + '%',
+            altPercent: data.altPercent + '%',
+            ariaPercent: data.ariaPercent + '%',
+            hasLandmarks: data.hasLandmarks ? t('yes') : t('no'),
+            hasSkipLink: data.hasSkipLink ? t('yes') : t('no'),
+            hasLang: data.hasLang ? t('yes') : t('no'),
+            labelPercent: data.labelPercent + '%',
+            accessibilityScore: data.accessibilityScore + '%',
+            internalLinks: data.internalLinks,
+            externalLinks: data.externalLinks,
+            nofollowPercent: data.nofollowPercent + '%',
+            ugcSponsoredPercent: data.ugcSponsoredPercent + '%',
+            brokenLinksCount: data.brokenLinksCount,
+            tooManyLinks: data.tooManyLinks ? t('yes') + ' (>100)' : t('no'),
+            hasBreadcrumb: data.hasBreadcrumb ? t('yes') : t('no'),
+            hasPrevNext: data.hasPrevNext ? t('yes') : t('no'),
+            linkScore: data.linkScore + '%',
+            cms: data.cms || 'Unknown',
+            jsFramework: data.jsFramework || 'Unknown',
+            analytics: data.analytics || t('notFound'),
+            cdn: data.cdn || 'Unknown',
+            hosting: data.hosting || 'Unknown',
+            hasRobots: data.hasRobots ? t('yes') : t('no'),
+            hasSitemap: data.hasSitemap ? t('yes') : t('no'),
+            hasCustom404: data.hasCustom404 ? t('yes') : t('no'),
+            hasAmp: data.hasAmp ? t('yes') : t('no'),
+            hasWebp: data.hasWebp ? t('yes') : t('no'),
+            hasLazyLoading: data.hasLazyLoading ? t('yes') : t('no'),
+            hasServiceWorker: data.hasServiceWorker ? t('yes') : t('no'),
+            hasDoctype: data.hasDoctype ? t('yes') : t('no'),
+            hasCharset: data.hasCharset ? t('yes') : t('no')
+        };
+
+        const blockTitles = {
+            security: tb('security'),
+            perf: tb('perf'),
+            seo: tb('seo'),
+            mobile: tb('mobile'),
+            a11y: tb('a11y'),
+            links: tb('links'),
+            tech: tb('tech')
+        };
+
+        for (const blockKey of Object.keys(blockTitles)) {
+            const keys = metricKeys[blockKey];
+            if (y > 700) { doc.addPage(); y = margin; }
+            doc.setFontSize(14);
+            doc.text(blockTitles[blockKey], margin, y);
+            y += 20;
+            doc.setFontSize(10);
+            for (const key of keys) {
+                const name = tm(key);
+                const val = valueMap[key] !== undefined ? valueMap[key] : '';
+                const text = name + ': ' + val;
+                doc.text(text, margin + 10, y);
+                y += 16;
+                if (y > 750) { doc.addPage(); y = margin; }
+            }
+            y += 10;
+        }
+
+        doc.save('MyDearSite_report.pdf');
+    }
+
+    pdfDownloadBtn.addEventListener('click', generatePDF);
+
+    analyzeBtnUI.addEventListener('click', runAnalysis);
     urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') runAnalysis(); });
 </script>
 </body>
