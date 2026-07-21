@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Dear Site — анализ сайта</title>
+    <title>My Dear Site</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>MDS</text></svg>">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -234,50 +234,24 @@
         try { return new URL(url).origin; } catch { return ''; }
     }
 
-    function safeFetch(url, timeout = 30000) {
-        return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject(new Error('Timeout')), timeout);
-            fetch(url, {
-                mode: 'cors',
-                headers: {
-                    'Accept': 'text/html,application/xhtml+xml',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                }
-            })
-                .then(r => { clearTimeout(timer); resolve(r); })
-                .catch(e => { clearTimeout(timer); reject(e); });
+    async function fetchViaApi(url) {
+        const response = await fetch('/api/fetch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
         });
-    }
-
-    const PROXIES = [
-        'https://corsproxy.io/?url=',
-        'https://api.allorigins.win/raw?url=',
-        'https://thingproxy.freeboard.io/fetch/',
-        'https://api.codetabs.com/v1/proxy?quest='
-    ];
-
-    async function fetchViaProxy(url) {
-        let lastError = null;
-        for (const proxy of PROXIES) {
-            try {
-                const resp = await safeFetch(proxy + encodeURIComponent(url));
-                if (!resp.ok) {
-                    throw new Error('HTTP ' + resp.status);
-                }
-                const text = await resp.text();
-                if (text.length < 100) throw new Error('Empty response');
-                return text;
-            } catch (e) {
-                lastError = e;
-                continue;
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error('API error: ' + response.status + ' ' + errorText);
         }
-        throw new Error('Не удалось загрузить страницу через прокси. ' + lastError.message);
+        const data = await response.json();
+        if (!data.html) throw new Error('Empty response from API');
+        return data.html;
     }
 
     async function fetchRobots(domain) {
         try {
-            const resp = await safeFetch(`https://${domain}/robots.txt`, 5000);
+            const resp = await fetch(`/api/fetch?url=https://${domain}/robots.txt`);
             if (!resp.ok) return null;
             return await resp.text();
         } catch { return null; }
@@ -285,7 +259,7 @@
 
     async function fetchSitemap(domain) {
         try {
-            const resp = await safeFetch(`https://${domain}/sitemap.xml`, 5000);
+            const resp = await fetch(`/api/fetch?url=https://${domain}/sitemap.xml`);
             if (!resp.ok) return null;
             return await resp.text();
         } catch { return null; }
@@ -295,7 +269,7 @@
         const results = {};
         for (const p of pages) {
             try {
-                const resp = await safeFetch(`https://${domain}${p}`, 3000);
+                const resp = await fetch(`/api/fetch?url=https://${domain}${p}`);
                 results[p] = resp.ok;
             } catch { results[p] = false; }
         }
@@ -309,7 +283,7 @@
             if (checked >= 10) break;
             if (!href.startsWith('http')) continue;
             try {
-                const resp = await safeFetch(href, 3000);
+                const resp = await fetch(`/api/fetch?url=${encodeURIComponent(href)}`);
                 if (!resp.ok) broken.push(href);
             } catch { broken.push(href); }
             checked++;
@@ -540,9 +514,9 @@
 
         let html = '';
         try {
-            html = await fetchViaProxy(url);
+            html = await fetchViaApi(url);
         } catch (e) {
-            throw new Error('Не удалось загрузить страницу. ' + e.message);
+            throw new Error('Не удалось загрузить страницу: ' + e.message);
         }
 
         const domData = analyzeDOM(html, baseUrl);
@@ -565,7 +539,7 @@
 
         let headers = {};
         try {
-            const resp = await safeFetch(url);
+            const resp = await fetch(`/api/fetch?url=${encodeURIComponent(url)}`);
             headers = resp.headers;
         } catch {}
 
@@ -585,7 +559,7 @@
         results.hasContact = servicePages['/contact'] || false;
 
         try {
-            const resp404 = await safeFetch(`https://${domain}/notfound-12345`, 3000);
+            const resp404 = await fetch(`/api/fetch?url=https://${domain}/notfound-12345`);
             results.hasCustom404 = resp404.status === 404 && !resp404.headers.get('content-type')?.includes('text/html') ? false : true;
         } catch {
             results.hasCustom404 = false;
